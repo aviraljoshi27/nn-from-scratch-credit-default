@@ -1,0 +1,16 @@
+# Python environment (uv rebuilds it from uv.lock)
+.venv/
+
+# Python's cache of compiled files
+__pycache__/
+*.py[cod]
+
+# Jupyter's autosave copies of notebooks
+.ipynb_checkpoints/
+
+# Data (the download script recreates it)
+data/raw/
+data/processed/
+
+# pytest's cache
+.pytest_cache/
