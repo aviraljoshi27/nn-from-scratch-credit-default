@@ -6,13 +6,17 @@ model all get exactly the same data.
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_XLS = PROJECT_ROOT / "data" / "raw" / "default of credit card clients.xls"
 TARGET = "default"
 SEED = 42
+CATEGORICAL = ["SEX", "EDUCATION", "MARRIAGE"]
 
 
 def load_raw():
@@ -52,3 +56,31 @@ def split(df):
         rest, test_size=0.50, stratify=rest[TARGET], random_state=SEED
     )
     return train, dev, test
+
+
+def make_preprocessor(train):
+    """Builds the one-hot + scaling step and fits it on the training set only.
+
+    Everything that isn't categorical or the target gets scaled, including
+    the PAY_* codes, which I decided to keep as numbers.
+    """
+    numeric = [c for c in train.columns if c not in CATEGORICAL + [TARGET]]
+    pre = ColumnTransformer(
+        [  # (a name we choose, the tool, the columns to use it on).
+            ("onehot", OneHotEncoder(), CATEGORICAL),
+            ("scale", StandardScaler(), numeric),
+        ],
+        sparse_threshold=0,
+    )
+    return pre.fit(train)
+
+
+def to_xy(pre, df):
+    """Turns a table into inputs X and answers y, both as NumPy arrays.
+
+    X is the preprocessed features, one row per customer, and y is the 0/1
+    default column. I use this everywhere so every model gets them the same way.
+    """
+    X = np.asarray(pre.transform(df), dtype=np.float64)
+    y = df[TARGET].to_numpy()
+    return X, y
