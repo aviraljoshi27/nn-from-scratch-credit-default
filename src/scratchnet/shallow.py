@@ -39,3 +39,19 @@ def forward(params, X):
     return A2, cache
 
 
+def backward(params, cache, X, Y):
+    """Works out how much each weight and bias should change to lower the cost.
+
+    It walks back from the output: first how wrong we were, then layer 2's
+    gradients, then the blame passed back through W2 and tanh, then layer 1's.
+    Every gradient comes out the same shape as the thing it belongs to.
+    """
+    m = X.shape[1]
+    A1, A2 = cache["A1"], cache["A2"]
+    dZ2 = A2 - Y
+    dW2 = dZ2 @ A1.T / m
+    db2 = np.sum(dZ2, axis=1, keepdims=True) / m
+    dZ1 = (params["W2"].T @ dZ2) * (1 - np.power(A1, 2))
+    dW1 = dZ1 @ X.T / m
+    db1 = np.sum(dZ1, axis=1, keepdims=True) / m
+    return {"dW1": dW1, "db1": db1, "dW2": dW2, "db2": db2}

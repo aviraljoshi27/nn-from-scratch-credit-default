@@ -1,6 +1,6 @@
 import numpy as np
 
-from scratchnet.shallow import forward, initialize
+from scratchnet.shallow import backward, forward, initialize
 
 
 def test_initialize_shapes_and_zero_biases():
@@ -35,3 +35,26 @@ def test_forward_matches_hand_calculation():
     A2, cache = forward(params, np.array([[0.5], [-1.0]]))
     assert np.allclose(cache["Z1"], [[-0.2], [-0.35], [0.25]])
     assert np.allclose(A2, [[0.565143]])
+
+
+def test_backward_shapes_match_params():
+    params = initialize(n_x=4, n_h=5)
+    X, Y = np.ones((4, 7)), np.ones((1, 7))
+    _, cache = forward(params, X)
+    grads = backward(params, cache, X, Y)
+    for name in ["W1", "b1", "W2", "b2"]:
+        assert grads["d" + name].shape == params[name].shape
+
+
+def test_zero_weights_give_hidden_layer_no_gradient():
+    params = {
+        "W1": np.zeros((2, 2)),
+        "b1": np.zeros((2, 1)),
+        "W2": np.zeros((1, 2)),
+        "b2": np.zeros((1, 1)),
+    }
+    X, Y = np.array([[0.5, 1.0, -1.0], [-1.0, 2.0, 0.0]]), np.array([[1, 0, 1]])
+    _, cache = forward(params, X)
+    grads = backward(params, cache, X, Y)
+    assert np.all(grads["dW1"] == 0) and np.all(grads["dW2"] == 0)
+    assert np.allclose(grads["db2"], [[-1 / 6]])
