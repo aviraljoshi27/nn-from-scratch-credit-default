@@ -1,6 +1,6 @@
 import numpy as np
 
-from scratchnet.shallow import backward, forward, initialize
+from scratchnet.shallow import backward, forward, initialize, train
 
 
 def test_initialize_shapes_and_zero_biases():
@@ -58,3 +58,12 @@ def test_zero_weights_give_hidden_layer_no_gradient():
     grads = backward(params, cache, X, Y)
     assert np.all(grads["dW1"] == 0) and np.all(grads["dW2"] == 0)
     assert np.allclose(grads["db2"], [[-1 / 6]])
+
+
+def test_train_lowers_cost_and_fits_easy_customers():
+    X = np.array([[-2.0, -1.0, 1.0, 2.0], [0.5, -0.5, 0.5, -0.5]])
+    Y = np.array([[0, 0, 1, 1]])
+    params, costs = train(X, Y, n_h=3, learning_rate=1.0, num_iterations=2000)
+    assert costs[-1] < costs[0]
+    A2, _ = forward(params, X)
+    assert np.array_equal(A2 > 0.5, Y == 1)

@@ -7,6 +7,7 @@ was when it matched sklearn.
 import numpy as np
 
 from scratchnet.activations import sigmoid
+from scratchnet.neuron import compute_cost
 
 
 def initialize(n_x, n_h, seed=42):
@@ -55,3 +56,22 @@ def backward(params, cache, X, Y):
     dW1 = dZ1 @ X.T / m
     db1 = np.sum(dZ1, axis=1, keepdims=True) / m
     return {"dW1": dW1, "db1": db1, "dW2": dW2, "db2": db2}
+
+
+def train(X, Y, n_h, learning_rate=0.1, num_iterations=1000, record_every=10, seed=42):
+    """Trains the network with plain gradient descent.
+
+    Every step it predicts, works out the gradients, then moves every weight
+    and bias a little bit against its gradient. It gives back the final
+    weights and the cost every few steps so I can plot the learning curve.
+    """
+    params = initialize(X.shape[0], n_h, seed)
+    costs = []
+    for i in range(num_iterations):
+        A2, cache = forward(params, X)
+        if i % record_every == 0:
+            costs.append(compute_cost(A2, Y))
+        grads = backward(params, cache, X, Y)
+        for name in params:
+            params[name] = params[name] - learning_rate * grads["d" + name]
+    return params, costs
